@@ -4,7 +4,6 @@ import com.aliyun.hitsdb.client.callback.AbstractBatchPutCallback;
 import com.aliyun.hitsdb.client.callback.AbstractMultiFieldBatchPutCallback;
 import com.aliyun.hitsdb.client.callback.QueryCallback;
 import com.aliyun.hitsdb.client.exception.NotImplementedException;
-import com.aliyun.hitsdb.client.exception.http.HttpClientException;
 import com.aliyun.hitsdb.client.exception.http.HttpUnknowStatusException;
 import com.aliyun.hitsdb.client.http.Host;
 import com.aliyun.hitsdb.client.util.*;
@@ -500,6 +499,19 @@ public class BalTSDBClient implements TSDB {
         for (int i = 0; i < MAX_RETRY_SIZE; i++) {
             try {
                 return client().putSync(resultType, points);
+            } catch (Exception e) {
+                exception = e;
+            }
+        }
+        throw new RuntimeException(exception);
+    }
+
+    @Override
+    public <T extends Result> T ltsPutSync(Collection<Point> points, List<String> clusterIdList, Class<T> resultType) {
+        Exception exception = null;
+        for (int i = 0; i < MAX_RETRY_SIZE; i++) {
+            try {
+                return client().ltsPutSync(points, clusterIdList, resultType);
             } catch (Exception e) {
                 exception = e;
             }
@@ -1042,6 +1054,18 @@ public class BalTSDBClient implements TSDB {
         for (int i = 0; i < MAX_RETRY_SIZE; i++) {
             try {
                 return client().multiFieldPutSync(points, resultType);
+            } catch (Exception e) {
+                exception = e;
+            }
+        }
+        throw new RuntimeException(exception);
+    }
+
+    @Override public <T extends Result> T ltsMputSync(Collection<MultiFieldPoint> points, List<String> clusterIdList, Class<T> resultType) {
+        Exception exception = null;
+        for (int i = 0; i < MAX_RETRY_SIZE; i++) {
+            try {
+                return client().ltsMputSync(points, clusterIdList, resultType);
             } catch (Exception e) {
                 exception = e;
             }

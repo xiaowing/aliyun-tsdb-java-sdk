@@ -1236,6 +1236,54 @@ public class TSDBClient implements TSDB {
     }
 
     @Override
+    public <T extends Result> T ltsPutSync(Collection<Point> points, List<String> clusterIdList, Class<T> resultType) {
+        UniqueUtil.uniquePoints(points, config.isDeduplicationEnable());
+        String jsonString = JSON.toJSONString(points, SerializerFeature.DisableCircularReferenceDetect);
+
+        HttpResponse httpResponse;
+        if (resultType.equals(Result.class)) {
+            httpResponse = httpclient.postForLts(HttpAPI.LTS_PUT, jsonString, clusterIdList, null, "clusterIdList");
+        } else if (resultType.equals(SummaryResult.class)) {
+            Map<String, String> paramsMap = new HashMap<String, String>();
+            paramsMap.put("summary", "true");
+            httpResponse = httpclient.postForLts(HttpAPI.LTS_PUT, jsonString, clusterIdList, paramsMap, "clusterIdList");
+        } else if (resultType.equals(DetailsResult.class)) {
+            Map<String, String> paramsMap = new HashMap<String, String>();
+            paramsMap.put("details", "true");
+            httpResponse = httpclient.postForLts(HttpAPI.LTS_PUT, jsonString, clusterIdList, paramsMap, "clusterIdList");
+        } else if (resultType.equals(IgnoreErrorsResult.class)) {
+            Map<String, String> paramsMap = new HashMap<String, String>();
+            paramsMap.put("ignoreErrors", "true");
+            httpResponse = httpclient.postForLts(HttpAPI.LTS_PUT, jsonString, clusterIdList, paramsMap, "clusterIdList");
+        } else {
+            throw new HttpClientException("This result type is not supported");
+        }
+
+        ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
+        HttpStatus httpStatus = resultResponse.getHttpStatus();
+
+        T result = null;
+        switch (httpStatus) {
+            case ServerSuccessNoContent:
+                result = (T) new Result();
+                return result;
+            case ServerSuccess:
+                String content = resultResponse.getContent();
+                if (resultType.equals(SummaryResult.class)) {
+                    result = (T) JSON.parseObject(content, SummaryResult.class);
+                } else if (resultType.equals(DetailsResult.class)) {
+                    result = (T) JSON.parseObject(content, DetailsResult.class);
+                } else if (resultType.equals(IgnoreErrorsResult.class)) {
+                    result = (T) JSON.parseObject(content, IgnoreErrorsResult.class);
+                }
+
+                return result;
+            default:
+                return (T) handleStatus(resultResponse);
+        }
+    }
+
+    @Override
     public void delete(Query query) throws HttpUnknowStatusException {
         try {
             queryDeleteField.set(query, true);
@@ -1578,6 +1626,55 @@ public class TSDBClient implements TSDB {
     @Override
     public <T extends Result> T multiFieldPutSync(MultiFieldPoint point, Class<T> resultType) {
         return multiFieldPutSync(Collections.singletonList(point), resultType);
+    }
+
+
+    @Override
+    public <T extends Result> T ltsMputSync(Collection<MultiFieldPoint> points, List<String> clusterIdList, Class<T> resultType) {
+        UniqueUtil.uniqueMultiFieldPoints(points, config.isDeduplicationEnable());
+        String jsonString = JSON.toJSONString(points, SerializerFeature.DisableCircularReferenceDetect);
+
+        HttpResponse httpResponse;
+        if (resultType.equals(Result.class)) {
+            httpResponse = httpclient.postForLts(HttpAPI.LTS_MPUT, jsonString, clusterIdList, null, "clusterIdList");
+        } else if (resultType.equals(SummaryResult.class)) {
+            Map<String, String> paramsMap = new HashMap<String, String>();
+            paramsMap.put("summary", "true");
+            httpResponse = httpclient.postForLts(HttpAPI.LTS_MPUT, jsonString, clusterIdList, paramsMap, "clusterIdList");
+        } else if (resultType.equals(MultiFieldDetailsResult.class)) {
+            Map<String, String> paramsMap = new HashMap<String, String>();
+            paramsMap.put("details", "true");
+            httpResponse = httpclient.postForLts(HttpAPI.LTS_MPUT, jsonString, clusterIdList, paramsMap, "clusterIdList");
+        } else if (resultType.equals(MultiFieldIgnoreErrorsResult.class)) {
+            Map<String, String> paramsMap = new HashMap<String, String>();
+            paramsMap.put("ignoreErrors", "true");
+            httpResponse = httpclient.postForLts(HttpAPI.LTS_MPUT, jsonString, clusterIdList, paramsMap, "clusterIdList");
+        } else {
+            throw new HttpClientException("This result type is not supported");
+        }
+
+        ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
+        HttpStatus httpStatus = resultResponse.getHttpStatus();
+
+        T result = null;
+        switch (httpStatus) {
+            case ServerSuccessNoContent:
+                result = (T) new Result();
+                return result;
+            case ServerSuccess:
+                String content = resultResponse.getContent();
+                if (resultType.equals(SummaryResult.class)) {
+                    result = (T) JSON.parseObject(content, SummaryResult.class);
+                } else if (resultType.equals(MultiFieldDetailsResult.class)) {
+                    result = (T) JSON.parseObject(content, MultiFieldDetailsResult.class);
+                } else if (resultType.equals(MultiFieldIgnoreErrorsResult.class)) {
+                    result = (T) JSON.parseObject(content, MultiFieldIgnoreErrorsResult.class);
+                }
+
+                return result;
+            default:
+                return (T) handleStatus(resultResponse);
+        }
     }
 
     /**

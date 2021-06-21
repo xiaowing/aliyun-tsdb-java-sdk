@@ -2,6 +2,7 @@ package com.aliyun.hitsdb.client.http;
 
 public interface HttpAPI {
     String PUT = "/api/put";
+    String LTS_PUT = "/api/lts_put";
     String QUERY = "/api/query";
     String QUERY_LAST = "/api/query/last";
     String TTL = "/api/ttl";
@@ -24,6 +25,9 @@ public interface HttpAPI {
      * Multi-field data model APIs
      */
     String MPUT = "/api/mput";
+
+    String LTS_MPUT = "/api/lts_mput";
+
     String MQUERY = "/api/mquery";
     String QUERY_MLAST = "/api/query/mlast";
     /**

@@ -111,6 +111,18 @@ public interface TSDB extends Closeable {
      */
     <T extends Result> T putSync(Class<T> resultType, Point... points);
 
+
+    /**
+     * Synchronous put method for LTS
+     *
+     * @param <T>        Result.class, SummaryResult.class, DetailsResult.class
+     * @param points     points
+     * @param clusterIdList
+     * @param resultType resultType
+     * @return Result
+     */
+    <T extends Result> T ltsPutSync(Collection<Point> points, List<String> clusterIdList, Class<T> resultType);
+
     /**
      * Synchronous multi-valued put method
      *
@@ -550,6 +562,21 @@ public interface TSDB extends Closeable {
      * delete all data from TSDB
      */
     boolean truncate() throws HttpUnknowStatusException;
+
+    /**
+     * Following APIs are for TSDB's multi-field data model structure's puts and queries for LTS.
+     * They replace the multiValued* APIs
+     * Since TSDB release 2.4.0
+     */
+    /**
+     * /api/lts_mput endpoint
+     * Synchronous put method
+     *
+     * @param points
+     * @param clusterIdList
+     * @return Result
+     */
+    <T extends Result> T ltsMputSync(Collection<MultiFieldPoint> points, List<String> clusterIdList, Class<T> resultType);
 
     <T extends Result> T multiFieldPutSync(MultiFieldPoint point, Class<T> resultType);
 
